@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ghana Agri-Market v3.0</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY&loading=async" async defer></script>
+</head>
+<body>
+  <div id="top-controls">
+    <button id="api-config-btn" onclick="openApiConfigModal()">⚙️ API Keys</button>
+    <button id="lang-toggle" onclick="toggleLanguage()">🇬🇭 Twi</button>
+    <button id="theme-toggle" onclick="toggleTheme()">☀️</button>
+  </div>
+
+  <div id="api-modal" class="modal" style="display:none;">
+    <div class="modal-content card">
+      <h3>🔌 API Key Configuration Hub</h3>
+      <p class="muted"><small>Configure live API keys or use built-in simulation fallbacks.</small></p>
+      <form onsubmit="saveApiKeys(event)">
+        <label><small>Google Maps API Key:</small></label>
+        <input type="text" id="api-maps" placeholder="AIzaSy...">
+        <label><small>Google Cloud Vision API Key:</small></label>
+        <input type="text" id="api-vision" placeholder="AIzaSy...">
+        <label><small>Paystack Public Key:</small></label>
+        <input type="text" id="api-paystack" placeholder="pk_test_...">
+        <div style="display:flex; gap:10px; margin-top:10px;">
+          <button type="submit">Save & Apply</button>
+          <button type="button" class="secondary" onclick="closeApiConfigModal()">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="app">
+    <section id="home" class="page active">
+      <header>
+        <h1><i data-lucide="tractor"></i> Ghana Agri-Market v3.0</h1>
+        <p data-i18n="tagline">AI-Powered. No Cheating. Pure Market Principles</p>
+      </header>
+      <div class="video-wrap">
+        <video autoplay muted loop playsinline>
+          <source src="https://videos.pexels.com/video-files/293212/293212-uhd_2560_1440_25fps.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="cta">
+        <button onclick="showPage('signup')" data-i18n="create_account">Create Account</button>
+        <button class="secondary" onclick="showPage('login')" data-i18n="login">Login</button>
+      </div>
+      <div class="card" style="margin-top: 24px;">
+        <h3 style="margin-top:0;" data-i18n="leaderboard_title">🏆 Top Trusted Farmers & Transporters</h3>
+        <div class="listing-row"><span>1. Kwame Mensah (Farmer)</span><span class="badge">985 pts</span></div>
+        <div class="listing-row"><span>2. Amina Abdulai (Farmer)</span><span class="badge">940 pts</span></div>
+        <div class="listing-row"><span>3. Kofi Boateng (Transporter)</span><span class="badge">910 pts</span></div>
+      </div>
+    </section>
+
+    <section id="signup" class="page card">
+      <h2 data-i18n="create_account">Create Account</h2>
+      <form onsubmit="signup(event)">
+        <input type="text" id="s-name" placeholder="Full Name / Company" required>
+        <input type="tel" id="s-phone" placeholder="Phone: 024xxxxxxx" pattern="0[235][0-9]{8}" required>
+        <input type="text" id="s-ghana" placeholder="Ghana Card (e.g., GHA-123456789-0)" required>
+        <input type="email" id="s-email" placeholder="Email" required>
+        <select id="s-role" required>
+          <option value="" data-i18n="select_role">Select Role</option>
+          <option value="Farmer">Farmer</option>
+          <option value="Buyer">Buyer</option>
+          <option value="Transporter">Transporter</option>
+          <option value="Admin">Admin</option>
+        </select>
+        <select id="s-region" required>
+          <option value="" data-i18n="select_region">Select Region</option>
+        </select>
+        <input type="password" id="s-pass" placeholder="Password (min 6 chars)" minlength="6" required>
+        <button type="submit" data-i18n="sign_up_btn">Sign Up</button>
+        <button type="button" class="secondary" onclick="showPage('home')" data-i18n="back">Back</button>
+      </form>
+    </section>
+
+    <section id="login" class="page card">
+      <h2 data-i18n="login">Login</h2>
+      <form onsubmit="login(event)">
+        <input type="tel" id="l-phone" placeholder="Phone" required>
+        <input type="password" id="l-pass" placeholder="Password" required>
+        <select id="l-role" required>
+          <option value="" data-i18n="login_as">Login As</option>
+          <option value="Farmer">Farmer</option>
+          <option value="Buyer">Buyer</option>
+          <option value="Transporter">Transporter</option>
+          <option value="Admin">Admin</option>
+        </select>
+        <button type="submit" data-i18n="login_btn">Login</button>
+        <button type="button" class="secondary" onclick="showPage('home')" data-i18n="back">Back</button>
+      </form>
+      <p style="margin-top:12px;"><small>Demo Logins (Pass: 123456)<br>Farmer: 0240000001 | Buyer: 0240000002<br>Transporter: 0240000003 | Admin: 0240000004</small></p>
+    </section>
+
+    <section id="dashboard" class="page card">
+      <nav>
+        <div>
+          <h3 id="dash-title" style="margin:0;"></h3>
+          <small id="dash-sub" class="muted"></small>
+        </div>
+        <button class="secondary small" onclick="logout()" data-i18n="logout">Logout</button>
+      </nav>
+      <div id="dash-content"></div>
+      <div id="map-section" style="margin-top:20px; display:none;">
+        <h4 style="margin-bottom:8px;" data-i18n="map_title">📍 Regional Logistics & Google Maps Hub</h4>
+        <div id="map" style="height:280px; border-radius:12px; background:#1f2937;"></div>
+      </div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
